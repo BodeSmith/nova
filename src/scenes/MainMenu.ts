@@ -26,8 +26,7 @@ export class MainMenu extends Scene
         this.anims.create({
             key: 'animate',
             frames: this.anims.generateFrameNumbers('studioSheet', { start: 0, end: 53 }), // Adjust frame range
-            frameRate: 10,
-            repeat: -1 // Loop the animation
+            frameRate: 10, // Loop the animation
         });
         sprite.play('animate');
 

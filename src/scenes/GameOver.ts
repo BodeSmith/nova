@@ -5,14 +5,19 @@ export class GameOver extends Scene
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
     gameover_text : Phaser.GameObjects.Text;
+    private music: Phaser.Sound.BaseSound;
 
     constructor ()
     {
         super('GameOver');
     }
-
+    preload() {
+        this.load.audio('gameOverMusic', 'assets/game-over-38511.mp3'); // Load your game over music
+    }
     create ()
-    {
+    {   this.music = this.sound.add('gameOverMusic'); // Add the game over music to the sound manager
+        this.music.play({ volume: 0.5 }
+        );
         this.camera = this.cameras.main
         this.camera.setBackgroundColor(0xff0000);
 

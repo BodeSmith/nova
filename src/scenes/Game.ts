@@ -10,7 +10,7 @@ export class Game extends Scene
     bullet: Phaser.Physics.Arcade.Group;
     bulletSpeed: number = 400;
     enemies: Enemy[];
-    private maxEnemies: number = 5;
+    private maxEnemies: number = 8;
     private score: number = 0; // Current score
     private highScore: number = 0; // High score
     private scoreText: Phaser.GameObjects.Text; // Text object for displaying score
@@ -192,7 +192,7 @@ export class Game extends Scene
 
     respawnEnemy(enemy: Enemy) {
         console.log("Enemy start at: ", enemy.x, enemy.y);
-        enemy.respawn(Phaser.Math.Between(800, 1024), Phaser.Math.Between(0, 768))
+        enemy.respawn(Phaser.Math.Between(800, 992), Phaser.Math.Between(0, 768))
         // Optionally, you can add logic to reset any enemy-specific state here
     }
 
@@ -275,7 +275,7 @@ export class Enemy extends GameObjects.Sprite {
         let body = this.body as Phaser.Physics.Arcade.Body;
         if (body.x <= 0) {
             console.log("bode")
-            this.setPosition(Phaser.Math.Between(800, 1024), Phaser.Math.Between(0, 768))
+            this.setPosition(Phaser.Math.Between(800, 992), Phaser.Math.Between(0, 768))
             body.setVelocityX(100); 
         }
 
@@ -287,6 +287,8 @@ export class Enemy extends GameObjects.Sprite {
 
     respawn(x: any, y: any){
         // Reset the enemy's position and make it active again
+        let body = this.body as Phaser.Physics.Arcade.Body;
+        body.setVelocityX(-100);
         this.setPosition(x, y);
         this.setActive(true).setVisible(true);
         console.log("RGER")
