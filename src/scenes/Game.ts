@@ -1,4 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
+let ENEMY_SPEED = 100;
 
 export class Game extends Scene
 {
@@ -25,6 +26,7 @@ export class Game extends Scene
 
     preload(){
         this.enemies = [];
+        ENEMY_SPEED = 100;
         this.load.spritesheet('ship',
             'assets/ship.png',
             { frameWidth: 32, frameHeight: 32 }
@@ -85,12 +87,12 @@ export class Game extends Scene
             frameRate: 10,
             repeat: -1
         });
-        this.anims.create({
+        /*this.anims.create({
             key: 'up',
             frames: this.anims.generateFrameNumbers('ship_up', { start: 0, end: 7 }),
             frameRate: 10,
             repeat: -1
-        });
+        });*/
         this.anims.create({
             key: 'down',
             frames: this.anims.generateFrameNumbers('ship_down', { start: 0, end: 7 }),
@@ -155,11 +157,13 @@ export class Game extends Scene
     playerHit(ship: any, enemy: any) {
         // Handle player death
         if(enemy.visible){
-            ship.setActive(false).setVisible(false); // Deactivate and hide the ship
+            ship.setActive(false).setVisible(false);
+             // Deactivate and hide the ship
             console.log("YOU PERISHED!"); // You can replace this with your death logic (e.g., restart the game)
             this.scene.start('GameOver');
             this.music.stop(); // Stop the background music
             this.scene.start('GameOver');
+            
         }
     }
 
@@ -205,6 +209,14 @@ export class Game extends Scene
             this.highScore = this.score; // Update high score
             this.highScoreText.setText(`High Score: ${this.highScore}`); // Update high score display
             this.saveHighScore(this.highScore); 
+        }
+
+        if (this.score % 100 === 0) {
+            ENEMY_SPEED += 15;
+            
+            this.enemies.forEach(enemy => {
+                enemy.setSpeed(ENEMY_SPEED); // Update each enemy's speed
+            });
         }
     }
 
@@ -259,7 +271,7 @@ export class Game extends Scene
 }
 
 export class Enemy extends GameObjects.Sprite {
-    private speed: number;
+    speed: number;
 
     constructor(scene: Phaser.Scene, x: number, y: number) {
         super(scene, x, y, 'enemy'); // Ensure you have an enemy sprite loaded
@@ -267,28 +279,33 @@ export class Enemy extends GameObjects.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
         (this.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true); // Cast to correct type
-        (this.body as Phaser.Physics.Arcade.Body).setVelocityX(-this.speed); // Cast to correct type
+        (this.body as Phaser.Physics.Arcade.Body).setVelocityX(-ENEMY_SPEED); // Cast to correct type // Update the velocity
+        this.setSpeed(ENEMY_SPEED);
+    }
+
+    setSpeed(speed: number) {
+        this.speed = speed; // Update the speed property
+        (this.body as Phaser.Physics.Arcade.Body).setVelocityX(-ENEMY_SPEED);
     }
 
     update() {
         // Simple movement logic
         let body = this.body as Phaser.Physics.Arcade.Body;
         if (body.x <= 0) {
-            console.log("bode")
             this.setPosition(Phaser.Math.Between(800, 992), Phaser.Math.Between(0, 768))
-            body.setVelocityX(100); 
+            body.setVelocityX(ENEMY_SPEED); 
         }
 
         if (body.blocked.right ||
          body.blocked.left) {
-            body.setVelocityX(-body.velocity.x); // Reverse direction
+            body.setVelocityX(-ENEMY_SPEED); // Reverse direction
         }
     }
 
     respawn(x: any, y: any){
         // Reset the enemy's position and make it active again
         let body = this.body as Phaser.Physics.Arcade.Body;
-        body.setVelocityX(-100);
+        body.setVelocityX(-(ENEMY_SPEED));
         this.setPosition(x, y);
         this.setActive(true).setVisible(true);
         console.log("RGER")
