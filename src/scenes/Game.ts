@@ -7,6 +7,7 @@ export class Game extends Scene
     background: Phaser.GameObjects.Image;
     msg_text : Phaser.GameObjects.Text;
     ship: any; 
+    lazer: any;
     cursors: any;
     bullet: Phaser.Physics.Arcade.Group;
     bulletSpeed: number = 400;
@@ -18,6 +19,7 @@ export class Game extends Scene
     private highScoreText: Phaser.GameObjects.Text;
     private music: any;
     lazer_enemy: Enemy2
+    score_when_lazer_enemy_killed: number = 0;
     
     constructor ()
     {
@@ -57,6 +59,9 @@ export class Game extends Scene
         this.load.spritesheet('explosion', 'assets/explosion.png',
             { frameWidth: 32, frameHeight: 32} 
         );
+        this.load.spritesheet('boss1','assets/boss1.png',
+            { frameWidth: 60, frameHeight: 90}
+        );
         this.load.spritesheet('lazer_enemy', 'assets/lazer_enemy.png',
             { frameWidth: 20, frameHeight: 25 }
         );
@@ -91,13 +96,14 @@ export class Game extends Scene
         //this.background.setAlpha(0.5);
 
         this.ship = this.physics.add.sprite(100, 300, 'ship');
-        let lazer= this.physics.add.group({
+        this.lazer= this.physics.add.group({
             defaultKey: 'lazer', // Ensure you have a bullet sprite loaded 
         });
 
         this.ship.setCollideWorldBounds(true);
 
-        this.lazer_enemy = new Enemy2(this, Phaser.Math.Between(900, 992), Phaser.Math.Between(0, 768), lazer, this.sound);
+        this.lazer_enemy = new Enemy2(this, Phaser.Math.Between(900, 992), Phaser.Math.Between(0, 768), this.lazer, this.sound);
+        this.lazer_enemy.setActive(false).setVisible(false);
 
         this.anims.create({
             key: 'enemy_charge',
@@ -161,7 +167,7 @@ export class Game extends Scene
         //this.physics.add.collider(this.bullet, this.enemies);
         this.physics.add.overlap(this.bullet, this.enemies, this.hitEnemy, undefined, this);
         this.physics.add.overlap(this.ship, this.enemies, this.playerHit, undefined, this);
-        this.physics.add.overlap(this.ship, lazer, this.playerHitLazer, undefined, this);
+        this.physics.add.overlap(this.ship, this.lazer, this.playerHitLazer, undefined, this);
         this.physics.add.overlap(this.bullet, this.lazer_enemy, this.hitLazerEnemy, undefined, this);
 
         this.anims.create({
@@ -238,6 +244,7 @@ export class Game extends Scene
         if(enemy.visible){
             bullet.setActive(false).setVisible(false); // Deactivate and hide the bullet
             enemy.setActive(false).setVisible(false);
+            this.score_when_lazer_enemy_killed = this.score;
             const explosion = this.add.sprite(enemy.x, enemy.y, 'explosion');
             explosion.play('explode');
             this.sound.play('shockwave');
@@ -247,7 +254,7 @@ export class Game extends Scene
                 // Remove the explosion sprite after the animation is complete
             });
 
-            enemy.respawn(Phaser.Math.Between(800, 992), Phaser.Math.Between(0, 768))
+            //enemy.respawn(Phaser.Math.Between(800, 992), Phaser.Math.Between(0, 768))
         }
     }
 
@@ -268,6 +275,10 @@ export class Game extends Scene
             this.saveHighScore(this.highScore); 
         }
 
+        if (this.score > 0  && (this.score - this.score_when_lazer_enemy_killed) == 250) {
+            this.spawnLazerEnemy();
+        }
+
         if (this.score % 100 === 0) {
             ENEMY_SPEED += 15;
             
@@ -275,6 +286,11 @@ export class Game extends Scene
                 enemy.setSpeed(ENEMY_SPEED); // Update each enemy's speed
             });
         }
+    }
+
+    spawnLazerEnemy() {
+        this.lazer_enemy.setActive(true).setVisible(true);
+        this.lazer_enemy.respawn(Phaser.Math.Between(800, 992), Phaser.Math.Between(0, 768))
     }
 
     getHighScore(): number {
@@ -394,15 +410,15 @@ export class Enemy2 extends Enemy {
         setTimeout(() => {
          if(this.visible){
             this.shootLazer();
-            this.setUpShooter(3000)
          }
+         this.setUpShooter(3000)
         }, timeout);
     }
 
     shootLazer(){
         try{
             this.anims.play('enemy_charge', true);
-            
+                
             const lazer = this.lazer.get(); // Get a bullet from the group
             let body = this.body as Phaser.Physics.Arcade.Body;
             if (lazer) {
