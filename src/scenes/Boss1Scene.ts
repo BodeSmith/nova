@@ -1,5 +1,5 @@
-import { Scene } from 'phaser';
-let ENEMY_SPEED = 100;
+import { Scene, GameObjects } from 'phaser';
+let ENEMY_SPEED = 1000;
 
 export class Boss1Scene extends Scene
 {
@@ -17,14 +17,22 @@ export class Boss1Scene extends Scene
     private highScoreText: Phaser.GameObjects.Text;
     private music: any;
     private boss1: any;
+    bossSpeed: number = 500;
+    bossHitPoints: number = 100;
+
+
     
     constructor ()
     {
         super('Boss1Scene');
     }
 
+    init(data: any) {
+        this.score = data.score;
+    }
+
     preload(){
-        ENEMY_SPEED = 100;
+        ENEMY_SPEED = 200  ;
         this.load.spritesheet('ship',
             'assets/ship.png',
             { frameWidth: 32, frameHeight: 32 }
@@ -55,9 +63,9 @@ export class Boss1Scene extends Scene
             { frameWidth: 60, frameHeight: 90}
         );
         this.load.audio('shockwave', 'assets/shockwave-105526.mp3'
-        ); // Adjust the path and format as necessary
-        this.load.audio('backgroundMusic', 'assets/8-bit-arcade-mode-158814.mp3'
-        ); // Adjust the path and format as necessary
+        ); 
+        this.load.audio('bossMusic', 'assets/8-bit-space-123218.mp3'
+        ); 
     }
 
     create ()
@@ -79,6 +87,9 @@ export class Boss1Scene extends Scene
         this.lazer= this.physics.add.group({
             defaultKey: 'lazer', // Ensure you have a bullet sprite loaded 
         });
+        this.music = this.sound.add('bossMusic'); // Add the music to the sound manager
+        this.music.setLoop(true); // Set the music to loop
+        this.music.play({ volume: 0.5 });
 
         this.ship.setCollideWorldBounds(true);
 
@@ -128,6 +139,9 @@ export class Boss1Scene extends Scene
 
         this.input?.keyboard?.on('keydown-SPACE', this.fireBullet, this);
 
+        this.boss1 = new Boss1(this, Phaser.Math.Between(900, 992), Phaser.Math.Between(0, 768));
+        this.boss1.setActive(true).setVisible(true);
+
 
         //this.physics.add.collider(this.bullet, this.enemies);
         this.physics.add.overlap(this.bullet, this.boss1, this.hitBoss, undefined, this);
@@ -140,10 +154,7 @@ export class Boss1Scene extends Scene
             frameRate: 10,
             repeat: 0 // Play once
         });
-        this.music = this.sound.add('backgroundMusic'); // Add the music to the sound manager
-        this.music.setLoop(true); // Set the music to loop
-        this.music.play({ volume: 0.5 });
-        this.score = 0;
+
         this.highScore = this.getHighScore(); // Retrieve high score from local storage
 
         // Create text objects for score and high score
@@ -151,8 +162,7 @@ export class Boss1Scene extends Scene
         this.highScoreText = this.add.text(16, 50, `High Score: ${this.highScore}`, { fontSize: '32px', color: '#fff' 
         });
     }
-
-   
+    
     playerHit(ship: any, boss1: any) {
         if(boss1.visible){
             ship.setActive(false).setVisible(false);
@@ -172,8 +182,37 @@ export class Boss1Scene extends Scene
         }
     }
     
-    hitBoss(bullet: any, boss1: any) {
-        if(boss1.visible){
+    hitBoss(boss1: any, bullet: any) {
+        bullet.destroy();
+        bullet.setActive(false).setVisible(false);
+        boss1.hitPoints += 25;
+        const explosion = this.add.sprite(boss1.x, boss1.y, 'explosion');
+        explosion.play('explode');
+        this.sound.play('shockwave');
+        explosion.on('animationcomplete', () => {
+            explosion.destroy();
+            // Remove the explosion sprite after the animation is complete
+        });
+        
+        if (boss1.visible && boss1.hitPoints >= 100){
+            boss1.setActive(false).setVisible(false);
+            
+            boss1.hitPoints = 0;
+            this.score = this.score + 100; 
+            const explosion = this.add.sprite(boss1.x, boss1.y, 'explosion');
+            explosion.play('explode');
+            this.sound.play('shockwave');
+            explosion.on('animationcomplete', () => {
+                explosion.destroy();
+                this.scene.start('Game', {score: this.score});
+            });
+            
+
+            console.log(`Boss hit! Remaining hit points: ${boss1.hitPoints}`);
+            
+
+
+        if (boss1.hitPoints <= 0) {
             bullet.setActive(false).setVisible(false); // Deactivate and hide the bullet
             boss1.setActive(false).setVisible(false);
             const explosion = this.add.sprite(boss1.x, boss1.y, 'explosion');
@@ -181,9 +220,10 @@ export class Boss1Scene extends Scene
             this.sound.play('shockwave');
             explosion.on('animationcomplete', () => {
                 explosion.destroy();
-                this.updateScore(10);
+                this.updateScore(100);
                 // Remove the explosion sprite after the animation is complete
-            });
+                });
+            }
         }
     }
 
@@ -249,6 +289,8 @@ export class Boss1Scene extends Scene
         
             this.ship.anims.play('turn');
         }
+
+        this.boss1.update();
         
         //if (this.enemies.filter(enemy => enemy.active).length < this.maxEnemies) {
         //    const enemy = new Enemy(this, Phaser.Math.Between(800, 1024), Phaser.Math.Between(0, 600));
@@ -256,4 +298,60 @@ export class Boss1Scene extends Scene
         //}
     }
 
+}
+
+export class Boss1 extends GameObjects.Sprite {
+    lazer: Phaser.Physics.Arcade.Group;
+    speed: number;
+    sound: any;
+    hitPoints: number = 0;
+    bossSpeed: number;
+    constructor(scene: Phaser.Scene, x: number, y: number) {
+        super(scene, x, y, 'boss1');
+        //this.lazer = lazer;
+        //this.sound = sound;
+        this.speed = 100; // Set speed
+        scene.add.existing(this);
+        scene.physics.add.existing(this);
+        (this.body as Phaser.Physics.Arcade.Body).setCollideWorldBounds(true); // Cast to correct type
+        this.setSpeed(ENEMY_SPEED);
+    }
+
+    setSpeed(speed: number) {
+        this.speed = speed; // Update the speed property
+        (this.body as Phaser.Physics.Arcade.Body).setVelocityY(-ENEMY_SPEED);
+    }
+
+    setUpShooter(timeout: number){
+        setTimeout(() => {
+         if(this.visible){
+            this.shootLazer();
+         }
+         this.setUpShooter(3000)
+        }, timeout);
+    }
+
+    shootLazer(){
+        
+    }
+
+    update() {
+        // Simple movement logic
+        let body = this.body as Phaser.Physics.Arcade.Body;
+        if (body.y <= 0) {
+            body.setVelocityY(ENEMY_SPEED); 
+        }
+
+        if (body.blocked.up) {
+            body.setVelocityY(ENEMY_SPEED); // Reverse direction
+        }else if(body.blocked.down) {
+            body.setVelocityY(-ENEMY_SPEED);
+        }
+    }
+
+    respawn(x: any, y: any){
+        // Reset the enemy's position and make it active again
+        this.setPosition(x, y);
+        this.setActive(true).setVisible(true);
+    }
 }

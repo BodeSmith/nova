@@ -28,6 +28,12 @@ export class Game extends Scene
         this.enemies = [];
     }
 
+    init(data: any) {
+        if(data.score){
+            this.score = data.score;
+        }
+    }
+
     preload(){
         this.enemies = [];
         ENEMY_SPEED = 100;
@@ -179,7 +185,6 @@ export class Game extends Scene
         this.music = this.sound.add('backgroundMusic'); // Add the music to the sound manager
         this.music.setLoop(true); // Set the music to loop
         this.music.play({ volume: 0.5 });
-        this.score = 0;
         this.highScore = this.getHighScore(); // Retrieve high score from local storage
 
         // Create text objects for score and high score
@@ -278,8 +283,9 @@ export class Game extends Scene
         if (this.score > 0  && (this.score - this.score_when_lazer_enemy_killed) == 250) {
             this.spawnLazerEnemy();
         }
-        if (this.score > 0  && (this.score - this.start_boss_scene) == 10000) {
-            this.scene.start('Boss1Scene');
+        if (this.score > 0  && (this.score - this.start_boss_scene) == 10) {
+            this.music.stop();
+            this.scene.start('Boss1Scene', {score: this.score});
         }
 
 
