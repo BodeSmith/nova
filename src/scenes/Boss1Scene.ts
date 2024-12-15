@@ -82,9 +82,11 @@ export class Boss1Scene extends Scene
         this.load.spritesheet('fire_wall', 'assets/fire_wall.png',
             { frameWidth: 350, frameHeight: 768}
         );
-        this.load.spritesheet('plasma', 'assets/plasma.png',
+        this.load.spritesheet('plasma', 'assets/plasma2.png',
             { frameWidth: 1024, frameHeight: 90}
         );
+
+        
 
         
     }
@@ -169,7 +171,15 @@ export class Boss1Scene extends Scene
 
         this.input?.keyboard?.on('keydown-SPACE', this.fireBullet, this);
 
-        this.boss1 = new Boss1(this, Phaser.Math.Between(900, 992), Phaser.Math.Between(0, 768), this.asteroid, this.fire_wall, this.sound);
+        this.boss1 = new Boss1(
+            this, 
+            Phaser.Math.Between(900, 992), 
+            Phaser.Math.Between(0, 768), 
+            this.asteroid, 
+            this.fire_wall, 
+            this.sound,
+            this.plasma
+        );
         this.boss1.setActive(true).setVisible(true);
 
        
@@ -391,8 +401,8 @@ export class Boss1 extends GameObjects.Sprite {
     constructor(scene: Phaser.Scene, x: number, y: number, 
         asteroid: Phaser.Physics.Arcade.Group,
         fire_wall: Phaser.Physics.Arcade.Group,
-        //plasma: Phaser.Physics.Arcade.Group,
-        sound: any
+        sound: any,
+        plasma: Phaser.Physics.Arcade.Group,
     ) {
         super(scene, x, y, 'boss1');
         this.setUpAttackTimer(); 
@@ -405,6 +415,7 @@ export class Boss1 extends GameObjects.Sprite {
         this.setSpeed(ENEMY_SPEED);
         this.asteroid = asteroid
         this.fire_wall = fire_wall
+        this.plasma = plasma;
         this.sound = sound;
     }
 
@@ -480,21 +491,27 @@ export class Boss1 extends GameObjects.Sprite {
     }
 
     attackTypeThree() {
-        // Implement the third attack logic here
+        // Implement the second attack logic here
         console.log("Boss performs Attack Type Three!");
         try{
-            //remove this, so that we are not replacing the ship
-            //this.setTexture('plasma')
-            //this.x = 0;
-            /*const plasma = this.plasma.get(); // Get a plasma from the group
+            
+            const plasma = this.plasma.get(); // Get a bullet from the group
             let body = this.body as Phaser.Physics.Arcade.Body;
             if (plasma) {
                 plasma.setActive(true).setVisible(true); 
-                plasma.setPosition(body.x, body.y);
-                // Play the plasma animation
-                plasma.anims.play('plasma', true); // Ensure 'plasma' animation is defined
+                plasma.setPosition(512, body.y)
+                const randomNumber = Math.floor(Math.random() * 2)
+                if(randomNumber == 0){
+                    plasma.setVelocityY(-200); 
+                }else{
+                    plasma.setVelocityY(200); 
+                }
+                setTimeout(() => {
+                    if(plasma.visible){
+                        plasma.setVisible(false)
                     }
-                }*/
+                }, 2000);
+            }
         }
         catch(error){}
     }
