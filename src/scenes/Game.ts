@@ -31,6 +31,8 @@ export class Game extends Scene
     init(data: any) {
         if(data.score){
             this.score = data.score;
+        }else{
+            this.score = 0;
         }
     }
 
@@ -283,7 +285,7 @@ export class Game extends Scene
         if (this.score > 0  && (this.score - this.score_when_lazer_enemy_killed) == 250) {
             this.spawnLazerEnemy();
         }
-        if (this.score > 0  && (this.score - this.start_boss_scene) == 10) {
+        if (this.score > 0  && (this.score - this.start_boss_scene) ==10) {
             this.music.stop();
             this.scene.start('Boss1Scene', {score: this.score});
         }
